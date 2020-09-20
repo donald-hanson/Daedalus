@@ -7,6 +7,7 @@ namespace Daedalus.Domain
         where TIdentity : IAggregateIdentity
     {
         Task<TAggregate> GetAsync(TIdentity id);
-        Task CommitAsync(TAggregate aggregateRoot);
+        Task UpdateAsync(TAggregate aggregate);
+        Task CommitAsync();
     }
 }

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Daedalus.Events;
 using Daedalus.Utility;
@@ -11,6 +12,7 @@ namespace Daedalus.Domain
     {
         private readonly IEventStore<TIdentity> _eventStore;
         private readonly IEventBus _eventBus;
+        private readonly IDictionary<TIdentity, List<IPendingEvent>> _pendingEvents = new Dictionary<TIdentity, List<IPendingEvent>>();
 
         public AggregateRepository(IEventStore<TIdentity> eventStore, IEventBus eventBus)
         {
@@ -31,18 +33,35 @@ namespace Daedalus.Domain
             return instance;
         }
 
-        public async Task CommitAsync(TAggregate instance)
+        public Task UpdateAsync(TAggregate instance)
         {
             if (instance.PendingEvents.Count > 0)
             {
-                await _eventStore.Insert(instance.Id, instance.PendingEvents);
-                foreach (var pendingEvent in instance.PendingEvents)
+                var key = instance.Id;
+                if (!_pendingEvents.TryGetValue(key, out var existingEvents))
+                {
+                    _pendingEvents[key] = existingEvents = new List<IPendingEvent>();
+                }
+                existingEvents.AddRange(instance.PendingEvents);
+            }
+
+            return Task.CompletedTask;
+        }
+
+        public async Task CommitAsync()
+        {
+            foreach (var pair in _pendingEvents)
+            {
+                var id = pair.Key;
+                var pendingEvents = pair.Value;
+                await _eventStore.Insert(id, pendingEvents);
+                foreach (var pendingEvent in pendingEvents)
                 {
                     await _eventBus.PublishAsync(pendingEvent.AggregateEvent, pendingEvent.EventMetadata);
                 }
             }
         }
-
+        
         private static TAggregate Create(TIdentity id)
         {
             var constructor = typeof(TAggregate).GetConstructor(new[] {typeof(TIdentity)});
