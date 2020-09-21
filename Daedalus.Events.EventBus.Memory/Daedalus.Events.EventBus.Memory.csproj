@@ -2,6 +2,12 @@
 
   <PropertyGroup>
     <TargetFramework>netcoreapp3.1</TargetFramework>
+    <Authors>Donald Hanson</Authors>
+    <Product />
+    <Company />
+    <PackageProjectUrl>https://github.com/donald-hanson/Daedalus</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/donald-hanson/Daedalus</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 
   <ItemGroup>
